@@ -53,6 +53,9 @@ acs stability --view returns --k 6 --k-range 3 4 6 8
 acs portfolio --view returns --k 6                     # walk-forward backtest + current weights
 acs exposure my_holdings.csv --view returns --k 6      # cluster concentration of a portfolio
 acs pairs --view returns --k 6                         # mean-reversion pair candidates
+
+# 5. Everything above as dashboard data
+acs export --view returns --k 6                        # reports/dashboard/*.json
 ```
 
 Every command writes CSVs and PNGs to `reports/`. Analysis commands take

@@ -8,6 +8,7 @@
     acs portfolio --view returns --k 6            # backtest cluster-aware weights
     acs exposure  holdings.csv --view returns --k 6
     acs pairs     --view returns --k 6            # mean-reversion candidates
+    acs export    --view returns --k 6            # everything above → reports/dashboard/*.json
 """
 
 from __future__ import annotations
@@ -359,6 +360,19 @@ def cmd_pairs(args: argparse.Namespace) -> None:
     print(f"Saved results to {R / 'pairs.csv'}")
 
 
+def cmd_export(args: argparse.Namespace) -> None:
+    from . import export
+
+    d = _load(args.min_obs, args.currency)
+    out = R / "dashboard"
+    files = export.run(d.close, d.local, d.volume, d.fund, d.currency, out, view_name=args.view, k=args.k,
+                       n_boot=args.n_boot, train=args.train, step=args.step, cost_bps=args.cost_bps,
+                       command="acs export " + " ".join(f"--{k.replace('_', '-')} {v}" for k, v in
+                                                          [("view", args.view), ("k", args.k),
+                                                           ("currency", args.currency), ("n_boot", args.n_boot)]))
+    print(f"Wrote {len(files)} dashboard files to {out}")
+
+
 # --------------------------------------------------------------------- main
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -441,6 +455,14 @@ def main() -> None:
     s.add_argument("--max-zero-frac", type=float, default=0.3)
     s.add_argument("--top", type=int, default=20)
     s.set_defaults(func=cmd_pairs)
+
+    s = sub.add_parser("export", help="Run every analysis and write dashboard JSON to reports/dashboard/")
+    add_common(s)
+    s.add_argument("--n-boot", type=int, default=50)
+    s.add_argument("--train", type=int, default=252)
+    s.add_argument("--step", type=int, default=63)
+    s.add_argument("--cost-bps", type=float, default=50.0)
+    s.set_defaults(func=cmd_export)
 
     args = p.parse_args()
     args.func(args)

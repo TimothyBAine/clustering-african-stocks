@@ -222,3 +222,16 @@ def test_usd_rates_caches_and_fills(tmp_path, monkeypatch):
     n = len(calls)
     fx.usd_rates(dates, ["NGN", "ZAR"], cache_dir=tmp_path, workers=1)
     assert len(calls) - n == 2  # only the missing day is retried (both mirrors)
+
+
+def test_export_writes_dashboard_files(tmp_path):
+    import json
+    from african_clusters import export
+
+    close, volume = panel(n_days=420)
+    files = export.run(close, close, volume, None, "LOCAL", tmp_path, k=2, n_boot=5, k_range=(2, 3),
+                       train=200, step=60)
+    names = {p.stem for p in files}
+    assert {"run", "clusters", "cluster_stability", "oos_scores", "strategy_perf", "equity", "pairs"} <= names
+    rows = json.loads((tmp_path / "clusters.json").read_text())["rows"]
+    assert len(rows) == 12 and {"x", "y", "cluster", "confidence"} <= set(rows[0])
