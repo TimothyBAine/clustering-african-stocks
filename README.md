@@ -4,6 +4,10 @@ Group equities across African exchanges (NGX, JSE, NSE, GSE, EGX, BRVM, …) by
 how they actually behave, using market data from the
 [Mansa API](https://mansamarkets.com/developers).
 
+**[View the interactive dashboard →](https://timothybaine.github.io/clustering-african-stocks/)**
+852 stocks on five exchanges, two years of daily data. The page is built from `acs export` output
+(`docs/data/`, refreshed by copying `reports/dashboard/*.json` there).
+
 ## Questions this project explores
 
 - Do stocks cluster by **exchange/country** (currency and macro factors), or by **sector** across borders?

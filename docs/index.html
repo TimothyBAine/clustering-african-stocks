@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>African Stock Clusters</title>
+<meta name="description" content="How 850 stocks on five African exchanges group by daily co-movement, whether the clusters hold up, and what they are good for. By Timothy Aine.">
+<meta property="og:title" content="African Stock Clusters">
+<meta property="og:description" content="How 850 stocks on five African exchanges group by daily co-movement, whether the clusters hold up, and what they are good for.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+/* Tokens follow timothybaine.github.io: dark navy by default, light on request. */
+:root{
+  --bg:#0C1424; --panel:#121C31; --panel-2:#17233C; --line:#22314F;
+  --text:#E7ECF3; --muted:#93A0B6; --faint:#5F6E88;
+  --accent:#3FB68B; --focus:#7FB4FF;
+  --grid:#1E2A44; --axis:#2C3B5C; --dot-off:#3A4865;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181;
+  --div-pos:#3987e5; --div-neg:#e66767; --div-mid:#22314F;
+  --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+  --display:"Bricolage Grotesque",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]){
+    --bg:#F3F5F8; --panel:#FFFFFF; --panel-2:#EAEFF5; --line:#D5DDE8;
+    --text:#0F1A2E; --muted:#4E5B72; --faint:#7A879C;
+    --accent:#1E8A65; --focus:#1F5FD1;
+    --grid:#E6EBF2; --axis:#C5CFDD; --dot-off:#C9D2DF;
+    --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4;
+    --div-pos:#2a78d6; --div-neg:#e34948; --div-mid:#EEF1F5;
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F3F5F8; --panel:#FFFFFF; --panel-2:#EAEFF5; --line:#D5DDE8;
+  --text:#0F1A2E; --muted:#4E5B72; --faint:#7A879C;
+  --accent:#1E8A65; --focus:#1F5FD1;
+  --grid:#E6EBF2; --axis:#C5CFDD; --dot-off:#C9D2DF;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4;
+  --div-pos:#2a78d6; --div-neg:#e34948; --div-mid:#EEF1F5;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:400 16px/1.6 var(--body)}
+a{color:inherit;text-underline-offset:3px;text-decoration-thickness:1px}
+a:hover{color:var(--accent)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:var(--display);line-height:1.1;margin:0;letter-spacing:-.02em}
+h1{font-size:clamp(36px,6vw,64px);font-weight:800;letter-spacing:-.035em;max-width:18ch}
+h2{font-size:clamp(26px,3.4vw,36px);font-weight:700;margin-bottom:10px}
+h3{font-size:19px;font-weight:700}
+p{margin:0 0 1em}
+.lede{color:var(--muted);max-width:66ch;font-size:17px}
+code{font-family:var(--mono);font-size:.9em}
+.num{font-variant-numeric:tabular-nums}
+
+.top{border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;justify-content:space-between;align-items:center;height:64px;gap:12px}
+.mark{font-family:var(--display);font-weight:700;font-size:17px;text-decoration:none}
+.top nav{display:flex;gap:6px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;border:1px solid var(--line);text-decoration:none;font-weight:500;font-size:14px;background:transparent;color:var(--text);cursor:pointer;font-family:var(--body)}
+.btn:hover{border-color:var(--accent);color:var(--text)}
+.theme{width:38px;height:38px;padding:0;justify-content:center}
+
+header.hero{padding:56px 0 28px}
+.kicker{color:var(--accent);font-weight:600;font-size:14px;letter-spacing:.02em;margin-bottom:14px}
+.hero .lede{margin-top:18px}
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:32px 0 0;padding:0;list-style:none}
+.stats li{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.stats b{display:block;font-family:var(--display);font-size:clamp(24px,3vw,32px);font-weight:700;letter-spacing:-.02em;line-height:1.15}
+.stats span{color:var(--muted);font-size:13.5px;line-height:1.35;display:block}
+
+section.block{padding:64px 0 8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:24px;margin-top:24px}
+.card h3{margin-bottom:4px}
+.card .sub{color:var(--muted);font-size:14.5px;margin:0 0 14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.grid2 > .card{margin-top:24px}
+.mapgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:28px;align-items:start}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.chip{font:500 13.5px var(--body);padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+.chip:hover{color:var(--text);border-color:var(--faint)}
+.chip[aria-pressed="true"]{background:var(--panel-2);color:var(--text);border-color:var(--s1)}
+
+.profile dl{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin:12px 0 16px}
+.profile dt{color:var(--muted);font-size:13px}
+.profile dd{margin:0;font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:-.01em}
+.profile .members{font-size:13.5px;color:var(--muted);line-height:1.7}
+.profile .members b{color:var(--text);font-weight:500}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted);margin:0 0 10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.legend i.line{height:2px;width:14px;border-radius:1px;vertical-align:3px}
+
+svg{display:block;width:100%;height:auto;overflow:visible}
+svg text{font-family:var(--body);fill:var(--muted);font-size:12px}
+svg .tick text{font-variant-numeric:tabular-nums}
+svg .gridline{stroke:var(--grid);stroke-width:1}
+svg .baseline{stroke:var(--axis);stroke-width:1}
+svg .lbl{fill:var(--text);font-weight:500}
+
+.tip{position:fixed;z-index:20;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:13px;line-height:1.45;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:260px;opacity:0;transition:opacity .08s}
+.tip b{font-weight:600}
+.tip .k{color:var(--muted)}
+.tip .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+
+.verdict{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;white-space:nowrap}
+.verdict svg{width:14px;height:14px;display:inline}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500;font-size:13px}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+details{margin-top:14px}
+summary{cursor:pointer;color:var(--muted);font-size:14px}
+summary:hover{color:var(--text)}
+details .scroll{max-height:380px;overflow:auto;margin-top:10px}
+
+.heat td.cell{text-align:center;font-variant-numeric:tabular-nums;font-weight:500;border:2px solid var(--panel);border-radius:6px}
+.heat th.rowh{font-weight:500;color:var(--text);font-size:14px}
+.heat .kind{display:block;color:var(--faint);font-size:12px;font-weight:400}
+.scale{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-top:10px}
+.scale span.bar{height:8px;width:160px;border-radius:4px;background:linear-gradient(90deg,var(--div-neg),var(--div-mid),var(--div-pos))}
+
+.notes{columns:2;column-gap:40px;color:var(--muted);font-size:15px}
+.notes li{margin-bottom:10px;break-inside:avoid}
+.notes b{color:var(--text);font-weight:500}
+.meta{display:grid;grid-template-columns:max-content 1fr;gap:6px 18px;font-size:14px;margin:0}
+.meta dt{color:var(--muted)}
+.meta dd{margin:0}
+footer{padding:48px 0 64px;color:var(--faint);font-size:14px;border-top:1px solid var(--line);margin-top:64px}
+.loading{color:var(--muted);padding:40px 0}
+
+@media (max-width:900px){
+  .mapgrid,.grid2{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .notes{columns:1}
+}
+@media (max-width:560px){
+  .wrap{padding:0 16px}
+  .top .btn.code{display:none}
+  .card{padding:18px}
+  header.hero{padding:40px 0 20px}
+}
+</style>
+</head>
+<body>
+<div class="tip" id="tip" role="status" aria-live="polite"></div>
+
+<div class="top">
+  <div class="wrap">
+    <a class="mark" href="https://timothybaine.github.io/">← Timothy Aine</a>
+    <nav>
+      <a class="btn code" href="https://github.com/TimothyBAine/clustering-african-stocks">Code on GitHub</a>
+      <button class="btn theme" id="theme" type="button" aria-label="Toggle light or dark theme">◐</button>
+    </nav>
+  </div>
+</div>
+
+<main>
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">African equities · Unsupervised learning</div>
+    <h1>Do African stocks cluster by country or by business?</h1>
+    <p class="lede" id="lede">Loading results…</p>
+    <ul class="stats" id="stats"></ul>
+  </div>
+</header>
+
+<section class="block" id="map" aria-labelledby="map-h">
+  <div class="wrap">
+    <h2 id="map-h">The map</h2>
+    <p class="lede">Each dot is a stock. Two stocks sit close together when their daily returns (in US dollars) move together. Pick a cluster to see who is in it and how it behaves.</p>
+    <div class="card">
+      <div class="chips" id="chips" role="group" aria-label="Choose a cluster"></div>
+      <div class="mapgrid">
+        <div id="scatter"></div>
+        <div class="profile" id="profile" aria-live="polite"></div>
+      </div>
+      <details>
+        <summary>All stocks as a table</summary>
+        <div class="scroll" id="members-table"></div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="countries" aria-labelledby="countries-h">
+  <div class="wrap">
+    <h2 id="countries-h">Clusters are mostly countries</h2>
+    <p class="lede" id="countries-lede"></p>
+    <div class="card">
+      <h3>Exchange mix of each cluster</h3>
+      <p class="sub">Number of stocks per cluster, split by listing exchange.</p>
+      <div class="legend" id="mix-legend"></div>
+      <div id="mix"></div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="stability" aria-labelledby="stability-h">
+  <div class="wrap">
+    <h2 id="stability-h">Which clusters are real?</h2>
+    <p class="lede">A cluster is only useful if it survives small changes to the data. Each cluster was re-estimated on <span id="nboot">50</span> block-bootstrapped histories, which resample 20-day stretches so stale prices and autocorrelation are preserved. Jaccard recovery measures how much of the original cluster comes back each time.<span id="temporal-note"></span></p>
+    <div class="grid2">
+      <div class="card">
+        <h3>Recovery by cluster</h3>
+        <p class="sub">Mean Jaccard across resamples. Bar end = mean, thin line = worst 10%.</p>
+        <div id="jaccard"></div>
+      </div>
+      <div class="card">
+        <h3>How many clusters?</h3>
+        <p class="sub">Agreement (ARI) between each resample and the full-sample clustering, by number of clusters.</p>
+        <div id="byk"></div>
+        <p class="sub" id="byk-note" style="margin:12px 0 0"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="meaning" aria-labelledby="meaning-h">
+  <div class="wrap">
+    <h2 id="meaning-h">What does "similar" mean?</h2>
+    <p class="lede">Similarity is a modelling choice. Each view was clustered on the first year of data and scored on the second: does a cluster still co-move, and does it explain later differences in volatility, drawdown and liquidity? Scores are z-scores against random clusters of the same sizes, so the 5-group <em>listing exchange</em> reference and a 6-cluster view compete fairly.</p>
+    <div class="card">
+      <h3>Out-of-sample usefulness (z-score vs random)</h3>
+      <p class="sub" id="oos-sub"></p>
+      <div class="scroll" id="heat"></div>
+      <div class="scale"><span>worse than random</span><span class="bar"></span><span>better than random</span></div>
+    </div>
+    <p class="lede" id="meaning-finding" style="margin-top:20px"></p>
+  </div>
+</section>
+
+<section class="block" id="portfolio" aria-labelledby="portfolio-h">
+  <div class="wrap">
+    <h2 id="portfolio-h">Clusters as a portfolio tool</h2>
+    <p class="lede" id="bt-lede"></p>
+    <div class="card">
+      <h3>Walk-forward growth of $1</h3>
+      <p class="sub" id="bt-sub"></p>
+      <div class="legend" id="eq-legend"></div>
+      <div id="equity"></div>
+      <div class="scroll" id="perf" style="margin-top:18px"></div>
+    </div>
+    <div class="card">
+      <h3>Pair screen</h3>
+      <p class="sub">Cointegration tested only within clusters, with false-discovery control. Hedge ratio fitted in-sample, then rechecked out of sample. A shortlist for research, not trading signals: shorting is restricted on most of these exchanges. The strongest pairs are mostly ETFs tracking the same index, which is a sanity check that the screen works rather than a discovery.</p>
+      <div class="scroll" id="pairs"></div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="method" aria-labelledby="method-h">
+  <div class="wrap">
+    <h2 id="method-h">Method and caveats</h2>
+    <ul class="notes">
+      <li><b>Data.</b> Daily prices from the <a href="https://mansamarkets.com/developers">Mansa API</a> for NGX, JSE, NSE, GSE and EGX, converted to US dollars at each day's rate. Stocks need at least 120 trading days.</li>
+      <li><b>Distance.</b> d = √(2(1 − ρ)) between daily log returns, clustered with Ward linkage. The 2-D map is classical MDS of the same distances, so it is an approximation of the real structure.</li>
+      <li><b>FX matters.</b> Converting to dollars puts each country's currency moves into every stock it lists. Part of "clusters are countries" is "clusters are currencies".</li>
+      <li><b>Thin trading.</b> Many frontier-market stocks don't trade most days, so their prices look flat and their correlations look low. Some have no price changes at all in the sample. Those land together because they all look like nothing is happening, not because they are similar businesses.</li>
+      <li><b>ETFs.</b> The JSE universe includes ETFs, which can become cluster representatives.</li>
+      <li><b>Backtest limits.</b> About one year of out-of-sample data, a flat 50 bps cost per unit of turnover and no bid-ask spread. It compares strategies; it does not forecast returns.</li>
+    </ul>
+    <div class="card">
+      <h3>This run</h3>
+      <dl class="meta" id="runmeta"></dl>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">Built by <a href="https://timothybaine.github.io/">Timothy Aine</a>. Code, tests and the <code>acs</code> command line on <a href="https://github.com/TimothyBAine/clustering-african-stocks">GitHub</a>. Not investment advice.</div>
+</footer>
+
+<script>
+(function(){
+"use strict";
+
+// ---------- theme ----------
+var root = document.documentElement;
+try { var saved = localStorage.getItem("theme"); if (saved) root.setAttribute("data-theme", saved); } catch(e){}
+document.getElementById("theme").addEventListener("click", function(){
+  var dark = getComputedStyle(root).colorScheme.indexOf("dark") > -1;
+  var next = dark ? "light" : "dark";
+  root.setAttribute("data-theme", next);
+  try { localStorage.setItem("theme", next); } catch(e){}
+});
+
+// ---------- helpers ----------
+var NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent){
+  var n = document.createElementNS(NS, tag);
+  for (var k in attrs) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+function h(tag, cls, html){ var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+var pct = function(v, d){ return v == null ? "–" : (v * 100).toFixed(d == null ? 0 : d) + "%"; };
+var f2 = function(v){ return v == null ? "–" : v.toFixed(2); };
+var signed = function(v, d){ return v == null ? "–" : (v > 0 ? "+" : "") + v.toFixed(d == null ? 1 : d); };
+function ticks(min, max, n){
+  var span = max - min || 1, step = Math.pow(10, Math.floor(Math.log10(span / n)));
+  var err = span / n / step; if (err >= 7.5) step *= 10; else if (err >= 3.5) step *= 5; else if (err >= 1.5) step *= 2;
+  var out = []; for (var v = Math.ceil(min / step) * step; v <= max + 1e-9; v += step) out.push(+v.toFixed(10));
+  return out;
+}
+function scale(d0, d1, r0, r1){ return function(v){ return r0 + (v - d0) / (d1 - d0 || 1) * (r1 - r0); }; }
+function svgBox(container, height){
+  container.innerHTML = "";
+  var w = Math.max(280, container.clientWidth);
+  var svg = el("svg", {viewBox: "0 0 " + w + " " + height, width: w, height: height, role: "img"}, container);
+  return {svg: svg, w: w, h: height};
+}
+
+var tip = document.getElementById("tip");
+function showTip(html, ev){
+  tip.innerHTML = html; tip.style.opacity = 1;
+  var x = ev.clientX + 14, y = ev.clientY + 14, r = tip.getBoundingClientRect();
+  if (x + r.width > innerWidth - 8) x = ev.clientX - r.width - 14;
+  if (y + r.height > innerHeight - 8) y = ev.clientY - r.height - 14;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+function hideTip(){ tip.style.opacity = 0; }
+
+var EXCH_ORDER = ["JSE", "EGX", "NGX", "NSE", "GSE"];          // fixed slot order, never re-ranked
+var EXCH_NAME = {JSE:"Johannesburg", EGX:"Egypt", NGX:"Nigeria", NSE:"Nairobi", GSE:"Ghana"};
+function exColor(ex){ var i = EXCH_ORDER.indexOf(ex); return "var(--s" + (i < 0 ? 5 : i + 1) + ")"; }
+
+var VERDICT = {
+  stable:    {label:"Stable",          color:"var(--good)",     icon:'<path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2"/>'},
+  pattern:   {label:"Real, fuzzy edges", color:"var(--warning)", icon:'<circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="2"/>'},
+  weak:      {label:"Weak",            color:"var(--serious)",  icon:'<path d="M3 8h10" stroke="currentColor" stroke-width="2"/>'},
+  dissolves: {label:"Falls apart",     color:"var(--critical)", icon:'<path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="2"/>'}
+};
+function verdictBadge(v){
+  var s = VERDICT[v] || {label:v, color:"var(--muted)", icon:""};
+  return '<span class="verdict" style="color:' + s.color + '"><svg viewBox="0 0 16 16" aria-hidden="true">' + s.icon + '</svg>' + s.label + '</span>';
+}
+
+var STRAT = {
+  cluster_parity: {label:"Cluster risk parity", slot:1},
+  hrp:            {label:"Hierarchical risk parity", slot:2},
+  cluster_reps:   {label:"One stock per cluster", slot:3},
+  inverse_vol:    {label:"Inverse volatility", slot:4},
+  equal_weight:   {label:"Equal weight", slot:5}
+};
+var OUTCOME = {comovement:"Co-movement", risk:"Volatility", drawdown:"Drawdown", liquidity:"Liquidity"};
+var PART = {returns:"Return correlation", risk:"Risk profile", liquidity:"Trading activity", profile:"All features",
+  fundamentals:"Fundamentals", returns_local:"Return correlation (local ccy)", risk_local:"Risk profile (local ccy)",
+  exchange:"Listing exchange", sector:"Sector"};
+
+// ---------- load ----------
+var FILES = ["run","clusters","cluster_stability","stability_k","temporal","agreement","oos_scores","strategy_perf","equity","allocation","pairs"];
+Promise.all(FILES.map(function(f){
+  return fetch("data/" + f + ".json").then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
+})).then(function(res){
+  var D = {}; FILES.forEach(function(f, i){ D[f] = res[i]; });
+  render(D);
+  var t; addEventListener("resize", function(){ clearTimeout(t); t = setTimeout(function(){ renderCharts(D); }, 150); });
+});
+
+var state = {cluster: null};
+
+function render(D){
+  var run = D.run.rows[0], cl = D.clusters.rows, st = D.cluster_stability.rows;
+  var byC = {}; st.forEach(function(r){ byC[r.cluster] = r; });
+  var stable = st.filter(function(r){ return r.verdict === "stable" || r.verdict === "pattern"; }).length;
+
+  // headline: how many clusters are single-exchange
+  var single = st.filter(function(r){ return r.exchange_mix.indexOf(",") < 0; }).length;
+  var ari = D.agreement ? D.agreement.rows.filter(function(r){ return r.a === "returns" && r.b === "exchange"; })[0] : null;
+  document.getElementById("lede").innerHTML =
+    "Mostly by country. Grouping " + run.n_stocks + " stocks by how their daily dollar returns move together, " +
+    single + " of the " + run.k + " clusters contain stocks from a single exchange" +
+    (ari ? " (agreement with the exchange labels: ARI " + ari.ari.toFixed(2) + ")" : "") +
+    ". Egypt stands on its own, Johannesburg splits into several groups, and the thinly traded frontier markets of Nigeria, Kenya and Ghana fall into one shared cluster.";
+
+  var stats = [
+    [run.n_stocks, "stocks with 120+ trading days"],
+    [run.exchanges.split(", ").length, "exchanges: " + run.exchanges],
+    [run.start.slice(0,4) + "–" + run.end.slice(2,4), "daily prices, " + run.currency],
+    [run.k, "clusters, Ward linkage"],
+    [stable + " / " + run.k, "clusters survive resampling"]
+  ];
+  document.getElementById("stats").innerHTML = stats.map(function(s){ return "<li><b>" + esc(s[0]) + "</b><span>" + esc(s[1]) + "</span></li>"; }).join("");
+  document.getElementById("nboot").textContent = run.n_boot;
+
+  // chips: default to the most stable cluster
+  var chips = document.getElementById("chips");
+  var sorted = st.slice().sort(function(a, b){ return a.cluster - b.cluster; });
+  state.cluster = st.slice().sort(function(a, b){ return b.jaccard_mean - a.jaccard_mean; })[0].cluster;
+  sorted.forEach(function(r){
+    var b = h("button", "chip", "C" + r.cluster + " · " + r.n);
+    b.type = "button"; b.dataset.c = r.cluster;
+    b.addEventListener("click", function(){ state.cluster = r.cluster; updateMap(D); });
+    chips.appendChild(b);
+  });
+
+  // countries lede
+  var mixed = st.filter(function(r){ return r.exchange_mix.indexOf(",") > -1; });
+  document.getElementById("countries-lede").textContent =
+    "Only " + mixed.length + " of the " + run.k + " clusters mix exchanges. Country-level forces such as currency moves, interest rates, local flows and shared trading calendars outweigh what a bank in Lagos has in common with a bank in Johannesburg. " +
+    "The mixed clusters are telling too: the frontier cluster is held together partly by stocks that rarely trade.";
+
+  // members table
+  var rows = cl.slice().sort(function(a, b){ return a.cluster - b.cluster || a.exchange.localeCompare(b.exchange) || a.ticker.localeCompare(b.ticker); });
+  document.getElementById("members-table").innerHTML =
+    "<table><thead><tr><th>Ticker</th><th>Exchange</th><th>Cluster</th><th class='r'>Confidence</th><th class='r'>Ann. return</th><th class='r'>Ann. vol</th><th class='r'>Beta</th><th class='r'>Days unchanged</th></tr></thead><tbody>" +
+    rows.map(function(r){ return "<tr><td>" + esc(r.ticker) + (r.representative ? " ★" : "") + "</td><td>" + r.exchange + "</td><td>C" + r.cluster + "</td><td class='r'>" + pct(r.confidence) +
+      "</td><td class='r'>" + pct(r.ann_return) + "</td><td class='r'>" + pct(r.ann_vol) + "</td><td class='r'>" + f2(r.beta) + "</td><td class='r'>" + pct(r.zero_return_frac) + "</td></tr>"; }).join("") +
+    "</tbody></table>";
+
+  // legends
+  document.getElementById("mix-legend").innerHTML = EXCH_ORDER.map(function(e){ return "<span><i style='background:" + exColor(e) + "'></i>" + e + " · " + EXCH_NAME[e] + "</span>"; }).join("");
+
+  // OOS subtitle
+  if (D.oos_scores){
+    var m = {}; D.oos_scores.meta.forEach(function(x){ m[x.label] = x.value; });
+    document.getElementById("oos-sub").textContent = "Clustered on " + (m["Train window"] || "the first half") + ", scored on " + (m["Test window"] || "the second half") + ". Null: " + (m["Null"] || "random partitions") + ". Shading is relative within each column.";
+    var zOf = function(p, o){ var r = D.oos_scores.rows.filter(function(x){ return x.partition === p && x.outcome === o; })[0]; return r ? r.z : null; };
+    var zEx = zOf("exchange", "comovement"), zRet = zOf("returns", "comovement"), zRisk = zOf("risk", "risk");
+    if (zEx != null && zRet != null){
+      document.getElementById("meaning-finding").innerHTML =
+        "<b>The surprise:</b> for predicting which stocks will move together next year, the plain listing exchange (z " + zEx.toFixed(0) +
+        ") beats the clustering learned from last year's returns (z " + zRet.toFixed(1) + "). Return clusters mostly rediscover countries, then add noise. " +
+        "The learned views earn their keep elsewhere: clustering on risk profile best predicts next year's volatility" + (zRisk != null ? " (z " + zRisk.toFixed(0) + ")" : "") +
+        ", and clustering on trading activity best predicts next year's liquidity.";
+    }
+  }
+  if (D.stability_k){
+    var sk = D.stability_k.rows.slice().sort(function(a, b){ return b.ari_mean - a.ari_mean; })[0];
+    var cur = D.stability_k.rows.filter(function(r){ return r.k === +run.k; })[0];
+    if (sk && cur && sk.k !== +run.k)
+      document.getElementById("byk-note").textContent = "Fewer clusters are more reproducible: k=" + sk.k + " scores " + f2(sk.ari_mean) + " against " + f2(cur.ari_mean) +
+        " for the k=" + run.k + " shown here. The extra JSE splits at k=" + run.k + " are where the instability lives.";
+  }
+  if (D.temporal && D.temporal.rows.length){
+    var ar = D.temporal.rows.map(function(r){ return r.ari; });
+    document.getElementById("temporal-note").textContent = " Membership also drifts over time: clustering consecutive 250-day windows gives an agreement (ARI) between " +
+      f2(Math.min.apply(null, ar)) + " and " + f2(Math.max.apply(null, ar)) + " from one quarter to the next.";
+  }
+
+  // backtest text
+  if (D.strategy_perf){
+    var mm = {}; D.strategy_perf.meta.forEach(function(x){ mm[x.label] = x.value; });
+    document.getElementById("bt-sub").textContent = "Out of sample " + (mm["Out-of-sample"] || "") + ". " + (mm["Rules"] || "") + ". Only stocks trading on at least half of days are eligible.";
+    var perf = D.strategy_perf.rows.slice().sort(function(a, b){ return b.sharpe - a.sharpe; });
+    var best = perf[0], P = {}; perf.forEach(function(r){ P[r.strategy] = r; });
+    var lbl = function(s){ return (STRAT[s] || {label: s}).label.toLowerCase(); };
+    var txt = "Five ways of building a portfolio were re-estimated every quarter on a trailing year of data, then held. " +
+      "The best risk-adjusted result came from " + lbl(best.strategy) + " (Sharpe " + f2(best.sharpe) + ", max drawdown " + pct(best.max_drawdown) + ")";
+    if (P.equal_weight && best.strategy !== "equal_weight") txt += ", ahead of equal weight (" + f2(P.equal_weight.sharpe) + ")";
+    txt += ".";
+    if (P.cluster_parity && P.equal_weight && P.cluster_parity.sharpe < P.equal_weight.sharpe)
+      txt += " The simpler cluster rules did not help: giving each cluster an equal risk budget trailed equal weight (Sharpe " + f2(P.cluster_parity.sharpe) + ")";
+    if (P.cluster_reps && P.cluster_reps.ann_return < 0)
+      txt += ", and holding one representative per cluster lost money (" + pct(P.cluster_reps.ann_return, 1) + " a year). Six stocks is too few to diversify away single-stock risk.";
+    else txt += ".";
+    document.getElementById("bt-lede").textContent = txt;
+  }
+
+  // run meta
+  var meta = D.run.meta;
+  document.getElementById("runmeta").innerHTML = meta.map(function(x){
+    return "<dt>" + esc(x.label) + "</dt><dd>" + (x.type === "code" ? "<code>" + esc(x.value) + "</code>" : esc(x.value)) + "</dd>";
+  }).join("");
+
+  renderTables(D);
+  renderCharts(D);
+}
+
+function renderCharts(D){
+  updateMap(D);
+  drawMix(D);
+  drawJaccard(D);
+  drawByK(D);
+  drawEquity(D);
+}
+
+// ---------- map ----------
+function updateMap(D){
+  var cl = D.clusters.rows, st = D.cluster_stability.rows, c = state.cluster;
+  document.querySelectorAll("#chips .chip").forEach(function(b){ b.setAttribute("aria-pressed", String(+b.dataset.c === c)); });
+  var box = svgBox(document.getElementById("scatter"), Math.min(520, Math.max(240, document.getElementById("scatter").clientWidth * 0.66)));
+  box.svg.setAttribute("aria-label", "Map of stocks by return co-movement; cluster C" + c + " highlighted");
+  var xs = cl.map(function(r){ return r.x; }), ys = cl.map(function(r){ return r.y; });
+  var pad = 14, x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+  // keep aspect ratio so distances aren't distorted
+  var sc = Math.min((box.w - 2 * pad) / (x1 - x0), (box.h - 2 * pad) / (y1 - y0));
+  var ox = (box.w - (x1 - x0) * sc) / 2, oy = (box.h - (y1 - y0) * sc) / 2;
+  var X = function(v){ return ox + (v - x0) * sc; }, Y = function(v){ return box.h - oy - (v - y0) * sc; };
+  var gOff = el("g", {}, box.svg), gOn = el("g", {}, box.svg);
+  cl.forEach(function(r){
+    var on = r.cluster === c;
+    var dot = el("circle", {cx: X(r.x).toFixed(1), cy: Y(r.y).toFixed(1), r: on ? 4.5 : 3,
+      fill: on ? "var(--s1)" : "var(--dot-off)", stroke: "var(--panel)", "stroke-width": on ? 1.5 : 0.75,
+      "fill-opacity": on ? 0.95 : 0.7}, on ? gOn : gOff);
+    dot.style.cursor = "pointer";
+    dot.addEventListener("mousemove", function(ev){
+      showTip("<b>" + esc(r.ticker) + "</b> <span class='k'>" + r.exchange + "</span><br>Cluster C" + r.cluster + " · confidence " + pct(r.confidence) +
+        "<br><span class='k'>Return</span> " + pct(r.ann_return) + " <span class='k'>Vol</span> " + pct(r.ann_vol) +
+        "<br><span class='k'>Days unchanged</span> " + pct(r.zero_return_frac), ev);
+    });
+    dot.addEventListener("mouseleave", hideTip);
+    dot.addEventListener("click", function(){ state.cluster = r.cluster; updateMap(D); });
+  });
+  // representative label
+  var rep = cl.filter(function(r){ return r.cluster === c && r.representative; })[0];
+  if (rep){
+    var t = el("text", {x: X(rep.x) + 8, y: Y(rep.y) - 8, class: "lbl"}, gOn); t.textContent = rep.ticker + " ★";
+  }
+
+  // profile
+  var s = st.filter(function(r){ return r.cluster === c; })[0];
+  var mem = cl.filter(function(r){ return r.cluster === c; });
+  var med = function(k){ var v = mem.map(function(r){ return r[k]; }).filter(function(v){ return v != null; }).sort(function(a, b){ return a - b; }); return v.length ? v[Math.floor(v.length / 2)] : null; };
+  var top = mem.slice().sort(function(a, b){ return a.zero_return_frac - b.zero_return_frac || b.confidence - a.confidence; }).slice(0, 12);
+  document.getElementById("profile").innerHTML =
+    "<h3>Cluster C" + c + "</h3>" + verdictBadge(s.verdict) +
+    "<p class='sub' style='margin:8px 0 0'>" + esc(s.exchange_mix) + "</p>" +
+    "<dl><div><dt>Stocks</dt><dd>" + s.n + "</dd></div><div><dt>Median ann. return</dt><dd>" + pct(med("ann_return")) + "</dd></div>" +
+    "<div><dt>Median volatility</dt><dd>" + pct(med("ann_vol")) + "</dd></div><div><dt>Median beta</dt><dd>" + f2(med("beta")) + "</dd></div>" +
+    "<div><dt>Days unchanged</dt><dd>" + pct(med("zero_return_frac")) + "</dd></div><div><dt>Bootstrap recovery</dt><dd>" + pct(s.jaccard_mean) + "</dd></div></dl>" +
+    "<div class='members'><b>Representative:</b> " + esc((s.representative || "").split(":")[1] || "–") + " ★<br><b>Most liquid members:</b> " +
+    top.map(function(r){ return esc(r.ticker); }).join(", ") + "</div>";
+}
+
+// ---------- exchange mix (stacked horizontal bars) ----------
+function drawMix(D){
+  var cl = D.clusters.rows, st = D.cluster_stability.rows.slice().sort(function(a, b){ return a.cluster - b.cluster; });
+  var rowH = 34, left = 44, right = 46, top = 6, bottom = 26;
+  var box = svgBox(document.getElementById("mix"), top + bottom + st.length * rowH);
+  box.svg.setAttribute("aria-label", "Stacked bars of exchange mix per cluster");
+  var max = Math.max.apply(null, st.map(function(r){ return r.n; }));
+  var X = scale(0, max, left, box.w - right);
+  ticks(0, max, 5).forEach(function(t){
+    el("line", {x1: X(t), x2: X(t), y1: top, y2: box.h - bottom, class: "gridline"}, box.svg);
+    var tx = el("text", {x: X(t), y: box.h - 8, "text-anchor": "middle", class: "tick"}, box.svg); tx.textContent = t;
+  });
+  st.forEach(function(r, i){
+    var y = top + i * rowH + 7, bh = rowH - 14, x = left;
+    var lab = el("text", {x: 0, y: y + bh / 2 + 4, class: "lbl"}, box.svg); lab.textContent = "C" + r.cluster;
+    var counts = {}; cl.forEach(function(m){ if (m.cluster === r.cluster) counts[m.exchange] = (counts[m.exchange] || 0) + 1; });
+    var segs = EXCH_ORDER.filter(function(e){ return counts[e]; });
+    segs.forEach(function(e, j){
+      var w = X(counts[e]) - left, last = j === segs.length - 1;
+      var gap = last ? 0 : 2;
+      var g = el("g", {}, box.svg);
+      var path;
+      if (last){ // rounded data-end only
+        var rr = Math.min(4, w - gap);
+        path = el("path", {d: "M" + x + "," + y + "h" + (w - rr) + "a" + rr + "," + rr + " 0 0 1 " + rr + "," + rr + "v" + (bh - 2 * rr) + "a" + rr + "," + rr + " 0 0 1 " + (-rr) + "," + rr + "h" + (-(w - rr)) + "z", fill: exColor(e)}, g);
+      } else {
+        path = el("rect", {x: x, y: y, width: Math.max(1, w - gap), height: bh, fill: exColor(e)}, g);
+      }
+      // generous hit target
+      var hit = el("rect", {x: x, y: y - 6, width: Math.max(4, w), height: bh + 12, fill: "transparent"}, g);
+      hit.addEventListener("mousemove", function(ev){ showTip("<span class='sw' style='background:" + exColor(e) + "'></span><b>C" + r.cluster + " · " + e + "</b><br>" + counts[e] + " of " + r.n + " stocks (" + pct(counts[e] / r.n) + ")", ev); });
+      hit.addEventListener("mouseleave", hideTip);
+      x += w;
+    });
+    var tot = el("text", {x: x + 8, y: y + bh / 2 + 4, class: "tick"}, box.svg); tot.textContent = r.n;
+  });
+}
+
+// ---------- Jaccard bars with p10 whisker ----------
+function drawJaccard(D){
+  var st = D.cluster_stability.rows.slice().sort(function(a, b){ return b.jaccard_mean - a.jaccard_mean; });
+  var rowH = 40, left = 44, right = 128, top = 8, bottom = 26;
+  var box = svgBox(document.getElementById("jaccard"), top + bottom + st.length * rowH);
+  box.svg.setAttribute("aria-label", "Bootstrap Jaccard recovery per cluster");
+  var X = scale(0, 1, left, box.w - right);
+  [0, .25, .5, .75, 1].forEach(function(t){
+    el("line", {x1: X(t), x2: X(t), y1: top, y2: box.h - bottom, class: "gridline"}, box.svg);
+    var tx = el("text", {x: X(t), y: box.h - 8, "text-anchor": "middle", class: "tick"}, box.svg); tx.textContent = t.toFixed(2);
+  });
+  st.forEach(function(r, i){
+    var y = top + i * rowH + 12, bh = 12;
+    var lab = el("text", {x: 0, y: y + bh / 2 + 4, class: "lbl"}, box.svg); lab.textContent = "C" + r.cluster;
+    var w = X(r.jaccard_mean) - left, rr = 4;
+    el("path", {d: "M" + left + "," + y + "h" + (w - rr) + "a" + rr + "," + rr + " 0 0 1 " + rr + "," + rr + "v" + (bh - 2 * rr) + "a" + rr + "," + rr + " 0 0 1 " + (-rr) + "," + rr + "h" + (-(w - rr)) + "z", fill: "var(--s1)"}, box.svg);
+    el("line", {x1: X(r.jaccard_p10), x2: X(r.jaccard_mean), y1: y + bh + 5, y2: y + bh + 5, stroke: "var(--muted)", "stroke-width": 1.5}, box.svg);
+    el("line", {x1: X(r.jaccard_p10), x2: X(r.jaccard_p10), y1: y + bh + 1, y2: y + bh + 9, stroke: "var(--muted)", "stroke-width": 1.5}, box.svg);
+    var fo = el("foreignObject", {x: box.w - right + 10, y: y - 4, width: right - 10, height: 22}, box.svg);
+    fo.innerHTML = '<div xmlns="http://www.w3.org/1999/xhtml">' + verdictBadge(r.verdict) + '</div>';
+    var hit = el("rect", {x: left, y: y - 8, width: box.w - right - left, height: bh + 20, fill: "transparent"}, box.svg);
+    hit.addEventListener("mousemove", function(ev){ showTip("<b>C" + r.cluster + "</b> · " + r.n + " stocks<br><span class='k'>Mean recovery</span> " + f2(r.jaccard_mean) +
+      "<br><span class='k'>Worst 10%</span> " + f2(r.jaccard_p10) + "<br><span class='k'>Dissolved in</span> " + pct(r.dissolved_frac) + " of resamples<br>" + esc(r.exchange_mix), ev); });
+    hit.addEventListener("mouseleave", hideTip);
+  });
+}
+
+// ---------- stability by k ----------
+function drawByK(D){
+  if (!D.stability_k) return;
+  var rows = D.stability_k.rows.slice().sort(function(a, b){ return a.k - b.k; });
+  var left = 40, right = 16, top = 12, bottom = 34;
+  var box = svgBox(document.getElementById("byk"), 260);
+  box.svg.setAttribute("aria-label", "Bootstrap agreement by number of clusters");
+  var ks = rows.map(function(r){ return r.k; });
+  var X = scale(Math.min.apply(null, ks), Math.max.apply(null, ks), left, box.w - right);
+  var Y = scale(0, 1, box.h - bottom, top);
+  [0, .25, .5, .75, 1].forEach(function(t){
+    el("line", {x1: left, x2: box.w - right, y1: Y(t), y2: Y(t), class: t ? "gridline" : "baseline"}, box.svg);
+    var tx = el("text", {x: left - 8, y: Y(t) + 4, "text-anchor": "end", class: "tick"}, box.svg); tx.textContent = t.toFixed(2);
+  });
+  ks.forEach(function(k){ var tx = el("text", {x: X(k), y: box.h - 14, "text-anchor": "middle", class: "tick"}, box.svg); tx.textContent = k; });
+  var xl = el("text", {x: (left + box.w - right) / 2, y: box.h, "text-anchor": "middle"}, box.svg); xl.textContent = "number of clusters (k)";
+  var hasP10 = rows[0].ari_p10 != null;
+  if (hasP10){
+    var band = rows.map(function(r){ return X(r.k) + "," + Y(r.ari_mean); }).concat(rows.slice().reverse().map(function(r){ return X(r.k) + "," + Y(r.ari_p10); }));
+    el("polygon", {points: band.join(" "), fill: "var(--s1)", "fill-opacity": 0.14}, box.svg);
+  }
+  el("polyline", {points: rows.map(function(r){ return X(r.k) + "," + Y(r.ari_mean); }).join(" "), fill: "none", stroke: "var(--s1)", "stroke-width": 2, "stroke-linejoin": "round"}, box.svg);
+  var cur = +D.run.rows[0].k;
+  rows.forEach(function(r){
+    var on = r.k === cur;
+    el("circle", {cx: X(r.k), cy: Y(r.ari_mean), r: on ? 5.5 : 4, fill: "var(--s1)", stroke: "var(--panel)", "stroke-width": 2}, box.svg);
+    if (on){ var t = el("text", {x: X(r.k), y: Y(r.ari_mean) - 12, "text-anchor": "middle", class: "lbl"}, box.svg); t.textContent = "k=" + r.k + " used"; }
+    var hit = el("circle", {cx: X(r.k), cy: Y(r.ari_mean), r: 16, fill: "transparent"}, box.svg);
+    hit.addEventListener("mousemove", function(ev){ showTip("<b>k = " + r.k + "</b><br><span class='k'>Mean ARI</span> " + f2(r.ari_mean) + (hasP10 ? "<br><span class='k'>Worst 10%</span> " + f2(r.ari_p10) : ""), ev); });
+    hit.addEventListener("mouseleave", hideTip);
+  });
+}
+
+// ---------- equity curves with crosshair ----------
+function drawEquity(D){
+  if (!D.equity) return;
+  var series = {}, dates = [];
+  D.equity.rows.forEach(function(r){
+    (series[r.strategy] = series[r.strategy] || []).push(r);
+  });
+  var names = Object.keys(STRAT).filter(function(s){ return series[s]; });
+  names.forEach(function(s){ series[s].sort(function(a, b){ return a.date < b.date ? -1 : 1; }); });
+  dates = series[names[0]].map(function(r){ return r.date; });
+  document.getElementById("eq-legend").innerHTML = names.map(function(s){ return "<span><i class='line' style='background:var(--s" + STRAT[s].slot + ")'></i>" + STRAT[s].label + "</span>"; }).join("");
+  var left = 44, right = 16, top = 12, bottom = 30;
+  var box = svgBox(document.getElementById("equity"), 320);
+  box.svg.setAttribute("aria-label", "Growth of one dollar by strategy");
+  var all = []; names.forEach(function(s){ series[s].forEach(function(r){ all.push(r.value); }); });
+  var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all);
+  var pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
+  var X = scale(0, dates.length - 1, left, box.w - right), Y = scale(lo, hi, box.h - bottom, top);
+  ticks(lo, hi, 5).forEach(function(t){
+    el("line", {x1: left, x2: box.w - right, y1: Y(t), y2: Y(t), class: "gridline"}, box.svg);
+    var tx = el("text", {x: left - 8, y: Y(t) + 4, "text-anchor": "end", class: "tick"}, box.svg); tx.textContent = "$" + t.toFixed(2);
+  });
+  if (lo < 1 && hi > 1) el("line", {x1: left, x2: box.w - right, y1: Y(1), y2: Y(1), class: "baseline"}, box.svg);
+  var nT = box.w < 500 ? 3 : 6;
+  for (var i = 0; i < nT; i++){
+    var idx = Math.round(i * (dates.length - 1) / (nT - 1));
+    var tx = el("text", {x: X(idx), y: box.h - 8, "text-anchor": i === 0 ? "start" : i === nT - 1 ? "end" : "middle", class: "tick"}, box.svg);
+    tx.textContent = new Date(dates[idx]).toLocaleDateString("en-GB", {month: "short", year: "2-digit"});
+  }
+  names.forEach(function(s){
+    el("polyline", {points: series[s].map(function(r, i){ return X(i).toFixed(1) + "," + Y(r.value).toFixed(1); }).join(" "),
+      fill: "none", stroke: "var(--s" + STRAT[s].slot + ")", "stroke-width": 2, "stroke-linejoin": "round"}, box.svg);
+  });
+  var cross = el("line", {y1: top, y2: box.h - bottom, stroke: "var(--faint)", "stroke-width": 1, opacity: 0}, box.svg);
+  var dots = names.map(function(s){ return el("circle", {r: 4, fill: "var(--s" + STRAT[s].slot + ")", stroke: "var(--panel)", "stroke-width": 2, opacity: 0}, box.svg); });
+  var hit = el("rect", {x: left, y: top, width: box.w - left - right, height: box.h - top - bottom, fill: "transparent"}, box.svg);
+  hit.addEventListener("mousemove", function(ev){
+    var pt = box.svg.getBoundingClientRect(), sx = (ev.clientX - pt.left) * box.w / pt.width;
+    var i = Math.max(0, Math.min(dates.length - 1, Math.round((sx - left) / (box.w - left - right) * (dates.length - 1))));
+    cross.setAttribute("x1", X(i)); cross.setAttribute("x2", X(i)); cross.setAttribute("opacity", 1);
+    var vals = names.map(function(s, j){ var v = series[s][i].value; dots[j].setAttribute("cx", X(i)); dots[j].setAttribute("cy", Y(v)); dots[j].setAttribute("opacity", 1); return [s, v]; })
+      .sort(function(a, b){ return b[1] - a[1]; });
+    showTip("<b>" + new Date(dates[i]).toLocaleDateString("en-GB", {day: "numeric", month: "short", year: "numeric"}) + "</b><br>" +
+      vals.map(function(v){ return "<span class='sw' style='background:var(--s" + STRAT[v[0]].slot + ")'></span>" + STRAT[v[0]].label + " <b class='num'>$" + v[1].toFixed(3) + "</b>"; }).join("<br>"), ev);
+  });
+  hit.addEventListener("mouseleave", function(){ hideTip(); cross.setAttribute("opacity", 0); dots.forEach(function(d){ d.setAttribute("opacity", 0); }); });
+}
+
+// ---------- tables ----------
+function renderTables(D){
+  // OOS heat table
+  if (D.oos_scores){
+    var rows = D.oos_scores.rows, parts = [], outs = [];
+    rows.forEach(function(r){ if (parts.indexOf(r.partition) < 0) parts.push(r.partition); if (outs.indexOf(r.outcome) < 0) outs.push(r.outcome); });
+    var get = {}; rows.forEach(function(r){ get[r.partition + "|" + r.outcome] = r; });
+    // Shade within each outcome column: liquidity z-scores dwarf the rest, and
+    // the question is which partition wins each outcome.
+    var colMax = {};
+    outs.forEach(function(o){ colMax[o] = Math.max.apply(null, rows.filter(function(r){ return r.outcome === o; }).map(function(r){ return Math.abs(r.z || 0); })) || 1; });
+    function fill(z, o){
+      if (z == null) return "transparent";
+      var p = Math.round(Math.min(1, Math.abs(z) / colMax[o]) * 85);
+      return "color-mix(in oklab, " + (z >= 0 ? "var(--div-pos)" : "var(--div-neg)") + " " + p + "%, var(--div-mid))";
+    }
+    function ink(z, o){ return z != null && Math.abs(z) / colMax[o] > 0.55 ? "#fff" : "var(--text)"; }
+    var kindOrder = {view: 0, "local currency": 1, reference: 2};
+    parts.sort(function(a, b){ return kindOrder[get[a + "|" + outs[0]].kind] - kindOrder[get[b + "|" + outs[0]].kind]; });
+    document.getElementById("heat").innerHTML = "<table class='heat'><thead><tr><th>Clustered by</th>" +
+      outs.map(function(o){ return "<th class='r' style='text-align:center'>" + (OUTCOME[o] || o) + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      parts.map(function(p){
+        var first = get[p + "|" + outs[0]];
+        return "<tr><th class='rowh'>" + esc(PART[p] || p) + "<span class='kind'>" + esc(first.kind) + " · " + first.n_clusters + " groups</span></th>" +
+          outs.map(function(o){ var r = get[p + "|" + o] || {}; return "<td class='cell' style='background:" + fill(r.z, o) + ";color:" + ink(r.z, o) + "' title='raw " + (r.raw == null ? "–" : r.raw.toFixed(3)) + "'>" + signed(r.z) + "</td>"; }).join("") + "</tr>";
+      }).join("") + "</tbody></table>";
+  }
+  // performance
+  if (D.strategy_perf){
+    var perf = D.strategy_perf.rows.slice().sort(function(a, b){ return b.sharpe - a.sharpe; });
+    document.getElementById("perf").innerHTML = "<table><thead><tr><th>Strategy</th><th class='r'>Ann. return</th><th class='r'>Ann. vol</th><th class='r'>Sharpe</th><th class='r'>Max drawdown</th><th class='r'>Worst day</th><th class='r'>Turnover / rebalance</th></tr></thead><tbody>" +
+      perf.map(function(r){ var s = STRAT[r.strategy] || {label: r.strategy, slot: 5};
+        return "<tr><td><span class='sw' style='display:inline-block;width:10px;height:2px;vertical-align:4px;margin-right:8px;background:var(--s" + s.slot + ")'></span>" + s.label + "</td><td class='r'>" + pct(r.ann_return, 1) + "</td><td class='r'>" + pct(r.ann_vol, 1) +
+          "</td><td class='r'>" + f2(r.sharpe) + "</td><td class='r'>" + pct(r.max_drawdown, 1) + "</td><td class='r'>" + pct(r.worst_day, 1) + "</td><td class='r'>" + pct(r.avg_turnover) + "</td></tr>"; }).join("") +
+      "</tbody></table>";
+  }
+  // pairs
+  var pr = D.pairs ? D.pairs.rows : [];
+  if (!pr.length){ document.getElementById("pairs").innerHTML = "<p class='sub'>No pairs passed the screen in this run.</p>"; return; }
+  var cand = pr.filter(function(r){ return r.candidate; });
+  var show = (cand.length ? cand : pr).slice(0, 12);
+  document.getElementById("pairs").innerHTML = (cand.length ? "" : "<p class='sub'>No pair passed every out-of-sample check; the closest in-sample matches are shown.</p>") +
+    "<table><thead><tr><th>Pair</th><th>Cluster</th><th class='r'>Hedge ratio</th><th class='r'>In-sample q</th><th class='r'>Out-of-sample p</th><th class='r'>Half-life (days)</th><th class='r'>z now</th></tr></thead><tbody>" +
+    show.map(function(r){ return "<tr><td>" + esc(String(r.a).split(":")[1] || r.a) + " / " + esc(String(r.b).split(":")[1] || r.b) + " <span class='kind' style='color:var(--faint);font-size:12px'>" + esc(String(r.a).split(":")[0]) + "</span></td><td>C" + r.cluster +
+      "</td><td class='r'>" + f2(r.hedge_ratio) + "</td><td class='r'>" + (r.q_train == null ? "–" : r.q_train.toFixed(3)) + "</td><td class='r'>" + (r.p_test == null ? "–" : r.p_test.toFixed(3)) +
+      "</td><td class='r'>" + (r.half_life_days == null ? "–" : r.half_life_days.toFixed(0)) + "</td><td class='r'>" + signed(r.z_now, 2) + "</td></tr>"; }).join("") +
+    "</tbody></table>";
+}
+})();
+</script>
+</body>
+</html>
