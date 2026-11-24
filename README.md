@@ -204,3 +204,9 @@ tests/              offline tests (synthetic data, mocked HTTP)
 - [x] Rolling-window clustering to track how cluster membership changes over time
 - [ ] Flag/exclude ETFs from the universe
 - [ ] Exploration notebook in `notebooks/`
+
+## License
+
+The code is released under the [MIT License](LICENSE). Market data fetched
+from the Mansa API, including the derived figures in `docs/data/`, is subject
+to [Mansa's terms](https://mansamarkets.com/developers), not this license.

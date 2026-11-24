@@ -7,6 +7,7 @@ name = "african-clusters"
 version = "0.1.0"
 description = "Cluster African equities using market data from the Mansa API"
 readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.10"
 dependencies = [
     "requests>=2.31",
